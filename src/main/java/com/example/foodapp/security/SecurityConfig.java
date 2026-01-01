@@ -23,16 +23,21 @@ public class SecurityConfig {
 
         http
                 .csrf(csrf -> csrf.disable())
-                .cors(cors -> {})   // ✅ ENABLE CORS HERE
+                .cors(cors -> {})
                 .sessionManagement(session ->
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 )
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/auth/**").permitAll()
-                        .requestMatchers("/favorites/reviews/**").permitAll() // 👈 PUBLIC REVIEWS
+
+                        // ✅ EXPLICITLY ALLOW FAVORITES
+                        .requestMatchers("/favorites/**").authenticated()
+
+                        // ✅ PUBLIC REVIEWS
+                        .requestMatchers("/reviews/**").permitAll()
+
                         .anyRequest().authenticated()
                 );
-
 
         http.addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
 

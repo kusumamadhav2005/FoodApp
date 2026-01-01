@@ -43,4 +43,30 @@ public class ReviewService {
         return reviewRepository
                 .findByRestaurantIdOrderByCreatedAtDesc(restaurantId);
     }
+
+    /* 🔹 EDIT REVIEW */
+    public Review updateReview(String reviewId,
+                               String email,
+                               int rating,
+                               String reviewText) {
+
+        Review review = reviewRepository
+                .findByIdAndUserEmail(reviewId, email)
+                .orElseThrow(() -> new RuntimeException("Review not found or unauthorized"));
+
+        review.setRating(rating);
+        review.setReview(reviewText == null ? "" : reviewText);
+
+        return reviewRepository.save(review);
+    }
+
+    public void deleteReview(String reviewId, String email) {
+
+        Review review = reviewRepository
+                .findByIdAndUserEmail(reviewId, email)
+                .orElseThrow(() -> new RuntimeException("Review not found or unauthorized"));
+
+        reviewRepository.delete(review);
+    }
+
 }

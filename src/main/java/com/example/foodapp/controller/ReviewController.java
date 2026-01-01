@@ -10,7 +10,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/reviews")
-@CrossOrigin("http://localhost:5173/")
+@CrossOrigin("*")
 public class ReviewController {
 
     private final ReviewService reviewService;
@@ -22,13 +22,13 @@ public class ReviewController {
         this.jwtUtil = jwtUtil;
     }
 
-    // PUBLIC – anyone can see reviews
+    /* PUBLIC */
     @GetMapping("/{restaurantId}")
     public List<Review> getReviews(@PathVariable String restaurantId) {
         return reviewService.getReviews(restaurantId);
     }
 
-    // PROTECTED – only logged-in users
+    /* ADD REVIEW */
     @PostMapping("/{restaurantId}")
     public Review addReview(
             @RequestHeader("Authorization") String authHeader,
@@ -44,4 +44,31 @@ public class ReviewController {
                 request.getReview()
         );
     }
+
+    /* ✏️ EDIT REVIEW */
+    @PutMapping("/{reviewId}")
+    public Review updateReview(
+            @RequestHeader("Authorization") String authHeader,
+            @PathVariable String reviewId,
+            @RequestBody ReviewRequest request) {
+
+        String email = jwtUtil.extractEmail(authHeader.substring(7));
+
+        return reviewService.updateReview(
+                reviewId,
+                email,
+                request.getRating(),
+                request.getReview()
+        );
+    }
+
+    @DeleteMapping("/{reviewId}")
+    public void deleteReview(
+            @RequestHeader("Authorization") String authHeader,
+            @PathVariable String reviewId) {
+
+        String email = jwtUtil.extractEmail(authHeader.substring(7));
+        reviewService.deleteReview(reviewId, email);
+    }
+
 }

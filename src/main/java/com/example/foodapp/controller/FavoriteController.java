@@ -15,7 +15,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/favorites")
-@CrossOrigin("*")
+@CrossOrigin("http://localhost:5173")
 public class FavoriteController {
 
     private final FavoriteService favoriteService;
@@ -26,27 +26,21 @@ public class FavoriteController {
         this.jwtUtil = jwtUtil;
     }
 
-    private String extractEmail(String authHeader) {
-        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Missing token");
-        }
-        return jwtUtil.extractEmail(authHeader.substring(7));
-    }
-
-
     @GetMapping
-    public ResponseEntity<List<FavoriteItem>> getFavorites(
-            @RequestHeader("Authorization") String authHeader) {
-
-        String email = extractEmail(authHeader);
-        return ResponseEntity.ok(favoriteService.getFavorites(email));
+    public List<FavoriteItem> getFavorites(
+            @RequestHeader("Authorization") String authHeader
+    ) {
+        String email = jwtUtil.extractEmail(authHeader.substring(7));
+        return favoriteService.getFavorites(email);
     }
 
     @PostMapping("/add")
     public List<FavoriteItem> addFavorite(
-            @AuthenticationPrincipal String email,
+            @RequestHeader("Authorization") String authHeader,
             @RequestBody FavoriteRequest request
     ) {
+        String email = jwtUtil.extractEmail(authHeader.substring(7));
+
         return favoriteService.addOrUpdateFavorite(
                 email,
                 request.getRestaurantId(),
@@ -55,55 +49,13 @@ public class FavoriteController {
         );
     }
 
-
-
-
-    @PostMapping("/remove")
-    public ResponseEntity<List<FavoriteItem>> removeFavorite(
+    @DeleteMapping("/{restaurantId}")
+    public List<FavoriteItem> removeFavorite(
             @RequestHeader("Authorization") String authHeader,
-            @RequestBody RemoveFavoriteRequest request) {
-
-        String email = extractEmail(authHeader);
-        return ResponseEntity.ok(
-                favoriteService.removeFavorite(email, request.getRestaurantId())
-        );
+            @PathVariable String restaurantId
+    ) {
+        String email = jwtUtil.extractEmail(authHeader.substring(7));
+        return favoriteService.removeFavorite(email, restaurantId);
     }
-    @GetMapping("/rating/{restaurantId}")
-    public ResponseEntity<Double> getAverageRating(
-            @PathVariable String restaurantId) {
-
-        return ResponseEntity.ok(
-                favoriteService.getAverageRating(restaurantId)
-        );
-    }
-    @GetMapping("/reviews/{restaurantId}")
-    public ResponseEntity<?> getReviews(
-            @PathVariable String restaurantId,
-            @RequestParam int page,
-            @RequestParam int size) {
-
-        return ResponseEntity.ok(
-                favoriteService.getReviews(restaurantId, page, size)
-        );
-    }
-    @PostMapping("/reviews/{restaurantId}")
-    public ResponseEntity<?> addReview(
-            @RequestHeader("Authorization") String authHeader,
-            @PathVariable String restaurantId,
-            @RequestBody FavoriteRequest request) {
-
-        String email = extractEmail(authHeader);
-
-        return ResponseEntity.ok(
-                favoriteService.addOrUpdateFavorite(
-                        email,
-                        restaurantId,
-                        request.getRating(),
-                        request.getReview()
-                )
-        );
-    }
-
-
-
 }
+
